@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda">
+
+  <xacro:include filename="$(find franka_hardware)/ros2_control/franka_arm.ros2_control.xacro"/>
+
+  <xacro:arg name="arm_id" default="panda"/>
+  <xacro:arg name="hand" default="false"/>
+  <xacro:arg name="tcp_xyz" default="0 0 0.1034"/>
+  <xacro:arg name="tcp_rpy" default="0 0 0"/>
+
+  <xacro:arg name="gazebo" default="false"/>
+  <xacro:arg name="parent" default="world"/>
+  <xacro:arg name="xyz" default="0 0 0"/>
+  <xacro:arg name="rpy" default="0 0 0"/>
+
+  <xacro:arg name="include_ros2_control" default="false"/>
+  <xacro:arg name="robot_ip" default=""/>
+  <xacro:arg name="use_fake_hardware" default="false"/>
+  <xacro:arg name="fake_sensor_commands" default="false"/>
+  <xacro:arg name="gazebo_effort" default="false"/>
+  <xacro:arg name="is_async" default="false"/>
+  <xacro:arg name="thread_priority" default="50"/>
+
+  <xacro:property name="arm_id" value="$(arg arm_id)"/>
+  <xacro:property name="mesh_pkg" value="package://franka_emika_panda/assets"/>
+  <xacro:property name="joint_limits" value="${xacro.load_yaml('$(find franka_emika_panda)/joint_limits.yaml')}"/>
+
+  <material name="panda_white">
+    <color rgba="1 1 1 1"/>
+  </material>
+  <material name="panda_off_white">
+    <color rgba="0.901961 0.921569 0.929412 1"/>
+  </material>
+  <material name="panda_black">
+    <color rgba="0.25 0.25 0.25 1"/>
+  </material>
+  <material name="panda_green">
+    <color rgba="0 1 0 1"/>
+  </material>
+  <material name="panda_light_blue">
+    <color rgba="0.039216 0.541176 0.780392 1"/>
+  </material>
+
+  <xacro:macro name="mesh_visual" params="mesh material:=panda_white">
+    <visual>
+      <geometry>
+        <mesh filename="${mesh_pkg}/${mesh}"/>
+      </geometry>
+      <material name="${material}"/>
+    </visual>
+  </xacro:macro>
+
+  <xacro:macro name="mesh_collision" params="mesh">
+    <collision>
+      <geometry>
+        <mesh filename="${mesh_pkg}/${mesh}"/>
+      </geometry>
+    </collision>
+  </xacro:macro>
+
+  <xacro:macro name="box_collision" params="xyz size">
+    <collision>
+      <origin xyz="${xyz}"/>
+      <geometry>
+        <box size="${size}"/>
+      </geometry>
+    </collision>
+  </xacro:macro>
+
+  <xacro:macro name="revolute_joint" params="name parent child xyz rpy">
+    <joint name="${arm_id}_${name}" type="revolute">
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${arm_id}_${parent}"/>
+      <child link="${arm_id}_${child}"/>
+      <axis xyz="0 0 1"/>
+      <limit
+        lower="${joint_limits[name]['limit']['lower']}"
+        upper="${joint_limits[name]['limit']['upper']}"
+        effort="${joint_limits[name]['limit']['effort']}"
+        velocity="${joint_limits[name]['limit']['velocity']}"/>
+      <dynamics damping="1.0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:if value="$(arg gazebo)">
+    <xacro:unless value="${'$(arg parent)' == ''}">
+      <link name="$(arg parent)"/>
+      <joint name="${arm_id}_base_joint" type="fixed">
+        <origin xyz="$(arg xyz)" rpy="$(arg rpy)"/>
+        <parent link="$(arg parent)"/>
+        <child link="${arm_id}_link0"/>
+      </joint>
+    </xacro:unless>
+  </xacro:if>
+
+  <link name="${arm_id}_link0">
+    <inertial>
+      <origin xyz="-0.041018 -0.00014 0.049974"/>
+      <mass value="0.629769"/>
+      <inertia ixx="0.00315" iyy="0.00388" izz="0.004285" ixy="8.2904e-7" ixz="0.00015" iyz="8.2299e-6"/>
+    </inertial>
+    <xacro:mesh_visual mesh="link0_0.obj" material="panda_off_white"/>
+    <xacro:mesh_visual mesh="link0_1.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link0_2.obj" material="panda_off_white"/>
+    <xacro:mesh_visual mesh="link0_3.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link0_4.obj" material="panda_off_white"/>
+    <xacro:mesh_visual mesh="link0_5.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link0_7.obj"/>
+    <xacro:mesh_visual mesh="link0_8.obj"/>
+    <xacro:mesh_visual mesh="link0_9.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link0_10.obj" material="panda_off_white"/>
+    <xacro:mesh_visual mesh="link0_11.obj"/>
+  </link>
+
+  <link name="${arm_id}_link1">
+    <inertial>
+      <origin xyz="0.003875 0.002081 -0.04762"/>
+      <mass value="4.970684"/>
+      <inertia ixx="0.70337" iyy="0.70661" izz="0.009117" ixy="-0.000139" ixz="0.006772" iyz="0.019169"/>
+    </inertial>
+    <xacro:mesh_visual mesh="link1.obj"/>
+  </link>
+  <xacro:revolute_joint name="joint1" parent="link0" child="link1" xyz="0 0 0.333" rpy="0 0 0"/>
+
+  <link name="${arm_id}_link2">
+    <inertial>
+      <origin xyz="-0.003141 -0.02872 0.003495"/>
+      <mass value="0.646926"/>
+      <inertia ixx="0.007962" iyy="0.02811" izz="0.025995" ixy="-0.003925" ixz="0.010254" iyz="0.000704"/>
+    </inertial>
+    <xacro:mesh_visual mesh="link2.obj"/>
+  </link>
+  <xacro:revolute_joint name="joint2" parent="link1" child="link2" xyz="0 0 0" rpy="-${pi/2} 0 0"/>
+
+  <link name="${arm_id}_link3">
+    <inertial>
+      <origin xyz="0.027518 0.039252 -0.066502"/>
+      <mass value="3.228604"/>
+      <inertia ixx="0.037242" iyy="0.036155" izz="0.01083" ixy="-0.004761" ixz="-0.011396" iyz="-0.012805"/>
+    </inertial>
+    <xacro:mesh_visual mesh="link3_0.obj"/>
+    <xacro:mesh_visual mesh="link3_1.obj"/>
+    <xacro:mesh_visual mesh="link3_2.obj"/>
+    <xacro:mesh_visual mesh="link3_3.obj" material="panda_black"/>
+  </link>
+  <xacro:revolute_joint name="joint3" parent="link2" child="link3" xyz="0 -0.316 0" rpy="${pi/2} 0 0"/>
+
+  <link name="${arm_id}_link4">
+    <inertial>
+      <origin xyz="-0.05317 0.104419 0.027454"/>
+      <mass value="3.587895"/>
+      <inertia ixx="0.025853" iyy="0.019552" izz="0.028323" ixy="0.007796" ixz="-0.001332" iyz="0.008641"/>
+    </inertial>
+    <xacro:mesh_visual mesh="link4_0.obj"/>
+    <xacro:mesh_visual mesh="link4_1.obj"/>
+    <xacro:mesh_visual mesh="link4_2.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link4_3.obj"/>
+  </link>
+  <xacro:revolute_joint name="joint4" parent="link3" child="link4" xyz="0.0825 0 0" rpy="${pi/2} 0 0"/>
+
+  <link name="${arm_id}_link5">
+    <inertial>
+      <origin xyz="-0.011953 0.041065 -0.038437"/>
+      <mass value="1.225946"/>
+      <inertia ixx="0.035549" iyy="0.029474" izz="0.008627" ixy="-0.002117" ixz="-0.004037" iyz="0.000229"/>
+    </inertial>
+    <xacro:mesh_visual mesh="link5_0.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link5_1.obj"/>
+    <xacro:mesh_visual mesh="link5_2.obj"/>
+  </link>
+  <xacro:revolute_joint name="joint5" parent="link4" child="link5" xyz="-0.0825 0.384 0" rpy="-${pi/2} 0 0"/>
+
+  <link name="${arm_id}_link6">
+    <inertial>
+      <origin xyz="0.060149 -0.014117 -0.010517"/>
+      <mass value="1.666555"/>
+      <inertia ixx="0.001964" iyy="0.004354" izz="0.005433" ixy="0.000109" ixz="-0.001158" iyz="0.000341"/>
+    </inertial>
+    <xacro:mesh_visual mesh="link6_0.obj" material="panda_off_white"/>
+    <xacro:mesh_visual mesh="link6_1.obj"/>
+    <xacro:mesh_visual mesh="link6_2.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link6_3.obj"/>
+    <xacro:mesh_visual mesh="link6_4.obj"/>
+    <xacro:mesh_visual mesh="link6_5.obj"/>
+    <xacro:mesh_visual mesh="link6_6.obj"/>
+    <xacro:mesh_visual mesh="link6_7.obj" material="panda_light_blue"/>
+    <xacro:mesh_visual mesh="link6_8.obj" material="panda_light_blue"/>
+    <xacro:mesh_visual mesh="link6_9.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link6_10.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link6_11.obj"/>
+    <xacro:mesh_visual mesh="link6_12.obj" material="panda_green"/>
+    <xacro:mesh_visual mesh="link6_13.obj"/>
+    <xacro:mesh_visual mesh="link6_14.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link6_15.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link6_16.obj"/>
+  </link>
+  <xacro:revolute_joint name="joint6" parent="link5" child="link6" xyz="0 0 0" rpy="${pi/2} 0 0"/>
+
+  <link name="${arm_id}_link7">
+    <inertial>
+      <origin xyz="0.010517 -0.004252 0.061597"/>
+      <mass value="0.735522"/>
+      <inertia ixx="0.012516" iyy="0.010027" izz="0.004815" ixy="-0.000428" ixz="-0.001196" iyz="-0.000741"/>
+    </inertial>
+    <xacro:mesh_visual mesh="link7_0.obj"/>
+    <xacro:mesh_visual mesh="link7_1.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link7_2.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link7_3.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link7_4.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link7_5.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link7_6.obj" material="panda_black"/>
+    <xacro:mesh_visual mesh="link7_7.obj"/>
+  </link>
+  <xacro:revolute_joint name="joint7" parent="link6" child="link7" xyz="0.088 0 0" rpy="${pi/2} 0 0"/>
+
+  <link name="${arm_id}_link8"/>
+  <joint name="${arm_id}_joint8" type="fixed">
+    <origin xyz="0 0 0.107" rpy="0 0 0"/>
+    <parent link="${arm_id}_link7"/>
+    <child link="${arm_id}_link8"/>
+  </joint>
+
+  <xacro:if value="$(arg hand)">
+    <link name="${arm_id}_hand">
+      <inertial>
+        <origin xyz="-0.01 0 0.03"/>
+        <mass value="0.73"/>
+        <inertia ixx="0.001" iyy="0.0025" izz="0.0017" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+      <xacro:mesh_visual mesh="hand_0.obj" material="panda_off_white"/>
+      <xacro:mesh_visual mesh="hand_1.obj" material="panda_black"/>
+      <xacro:mesh_visual mesh="hand_2.obj" material="panda_black"/>
+      <xacro:mesh_visual mesh="hand_3.obj"/>
+      <xacro:mesh_visual mesh="hand_4.obj" material="panda_off_white"/>
+      <xacro:box_collision xyz="0 0 0.04" size="0.12 0.08 0.08"/>
+    </link>
+    <joint name="${arm_id}_hand_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 -${pi/4}"/>
+      <parent link="${arm_id}_link8"/>
+      <child link="${arm_id}_hand"/>
+    </joint>
+
+    <link name="${arm_id}_leftfinger">
+      <inertial>
+        <mass value="0.015"/>
+        <inertia ixx="2.375e-6" iyy="2.375e-6" izz="7.5e-7" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+      <xacro:mesh_visual mesh="finger_0.obj" material="panda_off_white"/>
+      <xacro:mesh_visual mesh="finger_1.obj" material="panda_black"/>
+      <xacro:box_collision xyz="0 0.0055 0.0445" size="0.017 0.008 0.017"/>
+    </link>
+    <joint name="${arm_id}_finger_joint1" type="prismatic">
+      <origin xyz="0 0 0.0584" rpy="0 0 0"/>
+      <parent link="${arm_id}_hand"/>
+      <child link="${arm_id}_leftfinger"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0" upper="0.04" effort="100" velocity="0.2"/>
+    </joint>
+
+    <link name="${arm_id}_rightfinger">
+      <inertial>
+        <mass value="0.015"/>
+        <inertia ixx="2.375e-6" iyy="2.375e-6" izz="7.5e-7" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+      <xacro:mesh_visual mesh="finger_0.obj" material="panda_off_white"/>
+      <xacro:mesh_visual mesh="finger_1.obj" material="panda_black"/>
+      <xacro:box_collision xyz="0 0.0055 0.0445" size="0.017 0.008 0.017"/>
+    </link>
+    <joint name="${arm_id}_finger_joint2" type="fixed">
+      <origin xyz="0 0 0.0584" rpy="0 0 ${pi}"/>
+      <parent link="${arm_id}_hand"/>
+      <child link="${arm_id}_rightfinger"/>
+    </joint>
+
+    <link name="${arm_id}_hand_tcp"/>
+    <joint name="${arm_id}_hand_tcp_joint" type="fixed">
+      <origin xyz="$(arg tcp_xyz)" rpy="$(arg tcp_rpy)"/>
+      <parent link="${arm_id}_hand"/>
+      <child link="${arm_id}_hand_tcp"/>
+    </joint>
+  </xacro:if>
+
+  <xacro:if value="$(arg include_ros2_control)">
+    <xacro:franka_arm_ros2_control
+        robot_type="$(arg arm_id)"
+        robot_ip="$(arg robot_ip)"
+        use_fake_hardware="$(arg use_fake_hardware)"
+        fake_sensor_commands="$(arg fake_sensor_commands)"
+        gazebo="$(arg gazebo)"
+        hand="$(arg hand)"
+        gazebo_effort="$(arg gazebo_effort)"
+        arm_prefix=""
+        is_async="$(arg is_async)"
+        thread_priority="$(arg thread_priority)"
+        initial_joint1="0.0"
+        initial_joint2="0.0"
+        initial_joint3="0.0"
+        initial_joint4="${-pi/2}"
+        initial_joint5="0.0"
+        initial_joint6="${pi/2}"
+        initial_joint7="${-pi/4}"/>
+  </xacro:if>
+
+</robot>

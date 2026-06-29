@@ -18,14 +18,22 @@
   </xacro:macro>
 
   <!-- Configure all 7 arm joints for a given prefix with standard initial positions -->
-  <xacro:macro name="configure_arm_joints" params="joint_prefix gazebo:=0 gazebo_effort:=0">
-    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint1" initial_position="0.0" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
-    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint2" initial_position="${-pi/4}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
-    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint3" initial_position="0.0" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
-    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint4" initial_position="${-3*pi/4}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
-    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint5" initial_position="0.0" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
-    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint6" initial_position="${pi/2}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
-    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint7" initial_position="${pi/4}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
+  <xacro:macro name="configure_arm_joints"
+    params="joint_prefix gazebo:=0 gazebo_effort:=0
+            initial_joint1:=0.0
+            initial_joint2:=${-pi/4}
+            initial_joint3:=0.0
+            initial_joint4:=${-3*pi/4}
+            initial_joint5:=0.0
+            initial_joint6:=${pi/2}
+            initial_joint7:=${pi/4}">
+    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint1" initial_position="${initial_joint1}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
+    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint2" initial_position="${initial_joint2}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
+    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint3" initial_position="${initial_joint3}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
+    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint4" initial_position="${initial_joint4}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
+    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint5" initial_position="${initial_joint5}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
+    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint6" initial_position="${initial_joint6}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
+    <xacro:configure_arm_joint joint_name="${joint_prefix}_joint7" initial_position="${initial_joint7}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
   </xacro:macro>
 
   <!-- Configure a finger joint (position_only=1 for fr3_duo gazebo pattern: only position command) -->
@@ -157,10 +165,27 @@
             include_elbow:=0 elbow_start_index:=0
             include_cartesian_pose:=0
             include_sensor:=0 sensor_name:=''
-            finger_position_only:=0">
+            finger_position_only:=0
+            initial_joint1:=0.0
+            initial_joint2:=${-pi/4}
+            initial_joint3:=0.0
+            initial_joint4:=${-3*pi/4}
+            initial_joint5:=0.0
+            initial_joint6:=${pi/2}
+            initial_joint7:=${pi/4}">
 
     <!-- 7 arm joints (position/velocity/conditional-effort) -->
-    <xacro:configure_arm_joints joint_prefix="${joint_prefix}" gazebo="${gazebo}" gazebo_effort="${gazebo_effort}"/>
+    <xacro:configure_arm_joints
+        joint_prefix="${joint_prefix}"
+        gazebo="${gazebo}"
+        gazebo_effort="${gazebo_effort}"
+        initial_joint1="${initial_joint1}"
+        initial_joint2="${initial_joint2}"
+        initial_joint3="${initial_joint3}"
+        initial_joint4="${initial_joint4}"
+        initial_joint5="${initial_joint5}"
+        initial_joint6="${initial_joint6}"
+        initial_joint7="${initial_joint7}"/>
 
     <!-- Finger joint (only in gazebo with hand) -->
     <xacro:if value="${gazebo and hand}">

@@ -80,6 +80,40 @@ Then you can run the impedance control example.
 
     ros2 launch franka_gazebo_bringup gazebo_franka_arm_example_controller.launch.py load_gripper:=true franka_hand:='franka_hand' controller:='joint_impedance_example_controller'
 
+Panda Example with Gazebo
+-------------------------
+
+The Panda model is provided by the ``franka_emika_panda`` package and uses its
+local URDF/Xacro, joint limits, and mesh assets.
+
+.. code-block:: shell
+
+    colcon build --packages-up-to franka_gazebo_bringup
+    source install/setup.bash
+    ros2 launch franka_gazebo_bringup gazebo_panda_example_controller.launch.py
+
+To launch with the Panda hand:
+
+.. code-block:: shell
+
+    ros2 launch franka_gazebo_bringup gazebo_panda_example_controller.launch.py load_gripper:=true
+
+The launch file defaults to ``gravity_compensation_example_controller``. Other
+single-arm example controllers can be selected with the ``controller`` launch
+argument.
+
+To run the ONNX reach-tracking policy, install ``onnxruntime`` in the active
+Python environment and launch:
+
+.. code-block:: shell
+
+    python3 -m pip install --user onnxruntime
+    ros2 launch franka_gazebo_bringup gazebo_panda_onnx_policy.launch.py
+
+This starts Gazebo with ``panda_joint_trajectory_controller`` and runs
+``franka_emika_panda/panda_track_reach_ros2.py`` as the target supervisor and
+policy adapter.
+
 FR3 Duo Example with Gazebo
 ---------------------------
 

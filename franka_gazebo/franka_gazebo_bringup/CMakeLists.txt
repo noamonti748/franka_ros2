@@ -7,7 +7,7 @@ find_package(ament_cmake REQUIRED)
 # Install project launch files and supporting assets
 install(
   DIRECTORY
-    launch config worlds urdf
+    launch config worlds urdf rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

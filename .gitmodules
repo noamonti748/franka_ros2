@@ -1,0 +1,4 @@
+[submodule "franka_emika_panda/mujoco_menagerie"]
+	path = franka_emika_panda/mujoco_menagerie
+	url = https://github.com/google-deepmind/mujoco_menagerie.git
+	shallow = true

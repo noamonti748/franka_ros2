@@ -13,7 +13,14 @@
                  gazebo_effort:=false
                  arm_prefix:=''
                  is_async:=false
-                 thread_priority:=50">
+                 thread_priority:=50
+                 initial_joint1:=0.0
+                 initial_joint2:=${-pi/4}
+                 initial_joint3:=0.0
+                 initial_joint4:=${-3*pi/4}
+                 initial_joint5:=0.0
+                 initial_joint6:=${pi/2}
+                 initial_joint7:=${pi/4}">
 
     <ros2_control name="${arm_prefix}FrankaHardwareInterface" type="system" is_async="${is_async}">
       <xacro:if value="${is_async}">
@@ -58,7 +65,14 @@
           include_elbow="1"
           include_cartesian_pose="1"
           include_sensor="1"
-          sensor_name="${arm_prefix}${robot_type}_tcp"/>
+          sensor_name="${arm_prefix}${robot_type}_tcp"
+          initial_joint1="${initial_joint1}"
+          initial_joint2="${initial_joint2}"
+          initial_joint3="${initial_joint3}"
+          initial_joint4="${initial_joint4}"
+          initial_joint5="${initial_joint5}"
+          initial_joint6="${initial_joint6}"
+          initial_joint7="${initial_joint7}"/>
 
     </ros2_control>
     <xacro:if value="${gazebo}">

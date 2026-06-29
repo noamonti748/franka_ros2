@@ -11,6 +11,7 @@
 
   <depend>franka_bringup</depend>
   <depend>franka_description</depend>
+  <depend>franka_emika_panda</depend>
   <depend>franka_example_controllers</depend>
   <depend>franka_fr3_moveit_config</depend>
   <exec_depend>franka_gazebo_bringup</exec_depend>

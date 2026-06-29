@@ -13,9 +13,11 @@
   <exec_depend>sdformat_urdf</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>
   <exec_depend>franka_description</exec_depend>
+  <exec_depend>franka_emika_panda</exec_depend>
   <exec_depend>gz_ros2_control</exec_depend>
   <exec_depend>franka_hardware</exec_depend>
   <exec_depend>franka_gazebo_hardware</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
   <exec_depend>ros2controlcli</exec_depend>
   <exec_depend>franka_mobile_sensors</exec_depend>
   <exec_depend>franka_mobile</exec_depend>

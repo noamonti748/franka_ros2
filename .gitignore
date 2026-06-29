@@ -11,6 +11,13 @@ install/
 log/
 libfranka
 franka_description
+.venv/
+*.deb
+*.whl
+*.glb
+
+*.onnx
+*.zip
 
 #Third party packages
 gz_ros2_control/
