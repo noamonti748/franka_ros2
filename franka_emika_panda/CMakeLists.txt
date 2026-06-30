@@ -21,6 +21,7 @@ install(
   FILES
     panda.urdf.xacro
     ppo_track_franka.onnx
+    fr3_track_reach.rviz
     joint_limits.yaml
     panda.xml
     panda_nohand.xml

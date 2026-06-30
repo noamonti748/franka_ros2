@@ -59,6 +59,21 @@ PANDA_JOINT_LIMITS: tuple[tuple[float, float], ...] = (
     (-0.0175, 3.7525),
     (-2.8973, 2.8973),
 )
+# FR3 has a tighter envelope than the classic Panda; note joint6 cannot go below
+# 0.5445 rad (Panda allowed ~0), so the policy is clipped harder there on FR3.
+FR3_JOINT_LIMITS: tuple[tuple[float, float], ...] = (
+    (-2.7437, 2.7437),
+    (-1.7837, 1.7837),
+    (-2.9007, 2.9007),
+    (-3.0421, -0.1518),
+    (-2.8065, 2.8065),
+    (0.5445, 4.5169),
+    (-3.0159, 3.0159),
+)
+ROBOT_JOINT_LIMITS: dict[str, tuple[tuple[float, float], ...]] = {
+    "panda": PANDA_JOINT_LIMITS,
+    "fr3": FR3_JOINT_LIMITS,
+}
 
 
 @dataclass
@@ -668,13 +683,14 @@ def joint_state_to_maps(
     positions: Sequence[float],
     velocities: Sequence[float],
     efforts: Optional[Sequence[float]] = None,
+    strip_prefix: str = "panda_",
 ) -> tuple[dict[str, float], dict[str, float]]:
     pos_map: dict[str, float] = {}
     vel_map: dict[str, float] = {}
     for i, name in enumerate(joint_names):
         key = name
-        if key.startswith("panda_"):
-            key = key[len("panda_") :]
+        if strip_prefix and key.startswith(strip_prefix):
+            key = key[len(strip_prefix) :]
         if i < len(positions):
             pos_map[key] = float(positions[i])
         if i < len(velocities):
@@ -691,17 +707,23 @@ def _default_onnx_model_path() -> str:
         return str(Path(__file__).resolve().parent / "ppo_track_franka.onnx")
 
 
-def _clip_joint_positions(positions: Sequence[float]) -> list[float]:
+def _clip_joint_positions(
+    positions: Sequence[float],
+    limits: Sequence[tuple[float, float]] = PANDA_JOINT_LIMITS,
+) -> list[float]:
     return [
-        float(np.clip(value, PANDA_JOINT_LIMITS[i][0], PANDA_JOINT_LIMITS[i][1]))
+        float(np.clip(value, limits[i][0], limits[i][1]))
         for i, value in enumerate(positions)
     ]
 
 
-def _normalized_to_joint_positions(actions: Sequence[float]) -> list[float]:
+def _normalized_to_joint_positions(
+    actions: Sequence[float],
+    limits: Sequence[tuple[float, float]] = PANDA_JOINT_LIMITS,
+) -> list[float]:
     positions = []
     for i, value in enumerate(actions):
-        lower, upper = PANDA_JOINT_LIMITS[i]
+        lower, upper = limits[i]
         normalized = float(np.clip(value, -1.0, 1.0))
         positions.append(lower + 0.5 * (normalized + 1.0) * (upper - lower))
     return positions
@@ -713,32 +735,45 @@ def _interpret_policy_actions(
     last_command: Sequence[float],
     mode: str,
     delta_scale: float,
+    limits: Sequence[tuple[float, float]] = PANDA_JOINT_LIMITS,
 ) -> list[float]:
     if len(actions) != 7:
         raise ValueError(f"expected 7 policy actions, got {len(actions)}")
     if mode == "absolute":
-        return _clip_joint_positions(actions)
+        return _clip_joint_positions(actions, limits)
     if mode == "normalized_absolute":
-        return _normalized_to_joint_positions(actions)
+        return _normalized_to_joint_positions(actions, limits)
     if mode == "delta_position":
         return _clip_joint_positions(
-            float(position) + float(action) * delta_scale
-            for position, action in zip(joint_pos, actions)
+            (
+                float(position) + float(action) * delta_scale
+                for position, action in zip(joint_pos, actions)
+            ),
+            limits,
         )
     if mode == "normalized_delta_position":
         return _clip_joint_positions(
-            float(position) + float(np.clip(action, -1.0, 1.0)) * delta_scale
-            for position, action in zip(joint_pos, actions)
+            (
+                float(position) + float(np.clip(action, -1.0, 1.0)) * delta_scale
+                for position, action in zip(joint_pos, actions)
+            ),
+            limits,
         )
     if mode == "delta_command":
         return _clip_joint_positions(
-            float(command) + float(action) * delta_scale
-            for command, action in zip(last_command, actions)
+            (
+                float(command) + float(action) * delta_scale
+                for command, action in zip(last_command, actions)
+            ),
+            limits,
         )
     if mode == "normalized_delta_command":
         return _clip_joint_positions(
-            float(command) + float(np.clip(action, -1.0, 1.0)) * delta_scale
-            for command, action in zip(last_command, actions)
+            (
+                float(command) + float(np.clip(action, -1.0, 1.0)) * delta_scale
+                for command, action in zip(last_command, actions)
+            ),
+            limits,
         )
     raise ValueError(
         f"Unsupported action_output_mode={mode!r}. "
@@ -795,16 +830,20 @@ def _run_ros_node(args: argparse.Namespace) -> None:
     class PandaTrackReachNode(Node):
         def __init__(self) -> None:
             super().__init__("panda_track_reach")
-            self.declare_parameter("frame_id", "panda_link0")
+            # robot_type drives joint names, TF frames, the JTC topic, and the
+            # joint-limit clip table. Defaults reproduce the original Panda setup;
+            # set robot_type:=fr3 to retarget the same policy onto an FR3.
+            self.declare_parameter("robot_type", "panda")
+            self.declare_parameter("frame_id", "")
             self.declare_parameter("tcp_source", "tf")
-            self.declare_parameter("tcp_frame_id", "panda_hand_tcp")
+            self.declare_parameter("tcp_frame_id", "")
             self.declare_parameter("tcp_pose_topic", "ee_pose")
             self.declare_parameter("joint_states_topic", "joint_states")
             self.declare_parameter("target_pose_topic", "reach_track/target")
             self.declare_parameter("target_marker_topic", "reach_track/target_marker")
             self.declare_parameter("target_marker_scale_m", 0.06)
             self.declare_parameter("info_topic", "reach_track/info")
-            self.declare_parameter("command_topic", "panda_joint_trajectory_controller/joint_trajectory")
+            self.declare_parameter("command_topic", "")
             self.declare_parameter("control_hz", 60.0)
             self.declare_parameter("trajectory_duration_s", 0.05)
             self.declare_parameter("random_seed", 0)
@@ -820,10 +859,17 @@ def _run_ros_node(args: argparse.Namespace) -> None:
             self.declare_parameter("action_output_mode", "absolute")
             self.declare_parameter("action_delta_scale", 0.05)
 
-            frame_id = self.get_parameter("frame_id").get_parameter_value().string_value
+            arm_id = str(self.get_parameter("robot_type").value) or "panda"
+            self._arm_id = arm_id
+            self._arm_joint_names = tuple(f"{arm_id}_joint{i}" for i in range(1, 8))
+            self._joint_limits = ROBOT_JOINT_LIMITS.get(arm_id, PANDA_JOINT_LIMITS)
+
+            frame_id = str(self.get_parameter("frame_id").value) or f"{arm_id}_link0"
             self._frame_id = frame_id
             self._tcp_source = str(self.get_parameter("tcp_source").value)
-            self._tcp_frame_id = str(self.get_parameter("tcp_frame_id").value)
+            self._tcp_frame_id = (
+                str(self.get_parameter("tcp_frame_id").value) or f"{arm_id}_hand_tcp"
+            )
 
             cfg = PandaTrackReachConfig(
                 random_seed=int(self.get_parameter("random_seed").value),
@@ -856,9 +902,13 @@ def _run_ros_node(args: argparse.Namespace) -> None:
                 marker_qos,
             )
             self._info_pub = self.create_publisher(String, info_topic, 10)
+            command_topic = (
+                str(self.get_parameter("command_topic").value)
+                or f"{arm_id}_joint_trajectory_controller/joint_trajectory"
+            )
             self._command_pub = self.create_publisher(
                 JointTrajectory,
-                str(self.get_parameter("command_topic").value),
+                command_topic,
                 10,
             )
 
@@ -898,8 +948,10 @@ def _run_ros_node(args: argparse.Namespace) -> None:
 
             self._publish_target(self._session.reset())
             self.get_logger().info(
-                f"Panda track reach ready (frame={frame_id}, hz={hz:.1f}, "
-                f"policy_enabled={self._policy_enabled}, tcp_source={self._tcp_source})"
+                f"Track reach ready (robot_type={arm_id}, frame={frame_id}, "
+                f"tcp_frame={self._tcp_frame_id}, command_topic={command_topic}, "
+                f"hz={hz:.1f}, policy_enabled={self._policy_enabled}, "
+                f"tcp_source={self._tcp_source})"
             )
 
         def _on_tcp_pose(self, msg: PoseStamped) -> None:
@@ -911,7 +963,8 @@ def _run_ros_node(args: argparse.Namespace) -> None:
 
         def _on_joint_state(self, msg: JointState) -> None:
             pos_map, vel_map = joint_state_to_maps(
-                msg.name, msg.position, msg.velocity, msg.effort
+                msg.name, msg.position, msg.velocity, msg.effort,
+                strip_prefix=f"{self._arm_id}_",
             )
             if all(joint in pos_map for joint in PANDA_ARM_JOINTS):
                 self._joint_pos = {k: pos_map[k] for k in PANDA_ARM_JOINTS}
@@ -987,7 +1040,7 @@ def _run_ros_node(args: argparse.Namespace) -> None:
             msg = JointTrajectory()
             # A zero stamp asks joint_trajectory_controller to execute immediately.
             # Using wall time here makes Gazebo/sim-time controllers defer forever.
-            msg.joint_names = list(PANDA_ROS_JOINTS)
+            msg.joint_names = list(self._arm_joint_names)
             msg.points = [point]
             self._command_pub.publish(msg)
 
@@ -1016,13 +1069,14 @@ def _run_ros_node(args: argparse.Namespace) -> None:
                 self._last_command_vector,
                 self._action_output_mode,
                 self._action_delta_scale,
+                self._joint_limits,
             )
             smoothed_actions = self._session.smooth_actions(
                 target_actions,
                 measured_joint_pos=self._joint_pos_vector,
                 measured_joint_vel=self._joint_vel_vector,
             )
-            command = _clip_joint_positions(smoothed_actions)
+            command = _clip_joint_positions(smoothed_actions, self._joint_limits)
             self._last_command_vector = command
             self._publish_joint_command(command)
             return command
@@ -1076,7 +1130,10 @@ def _run_ros_node(args: argparse.Namespace) -> None:
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        # On Ctrl-C the signal handler may already have shut the context down;
+        # guard to avoid a noisy "rcl_shutdown already called" traceback.
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 def main() -> None:
