@@ -1,0 +1,96 @@
+{
+  "checkpoint": "/home/noamonti/warp/artifacts/observable_sim2real/autonomous_v24_round1.npz",
+  "checkpoint_sha256": "3451a762c4f6cb28cac27370d9f4e997a89de2f9673bc4a6e75a0ecd7a63296d",
+  "onnx": "/home/noamonti/warp/artifacts/observable_sim2real/student_autonomous_v1.onnx",
+  "onnx_sha256": "c3cedea560bb263bba912f7ddbcbd8781b8ca844c1b18e3c3cd87f630f47e39d",
+  "opset": 17,
+  "inputs": {
+    "pixels": [
+      "batch",
+      64,
+      64,
+      3
+    ],
+    "state": [
+      "batch",
+      47
+    ]
+  },
+  "outputs": {
+    "action": [
+      "batch",
+      7
+    ],
+    "geometry": [
+      "batch",
+      6
+    ],
+    "mode_probs": [
+      "batch",
+      8
+    ]
+  },
+  "parity": {
+    "tolerance": 2e-05,
+    "flax_torch_action_max_abs": 5.364418029785156e-07,
+    "flax_torch_geometry_max_abs": 3.8743019104003906e-07,
+    "flax_torch_mode_max_abs": 1.862645149230957e-08,
+    "torch_onnx_action_max_abs": 4.76837158203125e-07,
+    "torch_onnx_geometry_max_abs": 4.172325134277344e-07,
+    "torch_onnx_mode_max_abs": 1.1920928955078125e-07,
+    "onnxruntime_checked": true,
+    "corpus": {
+      "path": "/home/noamonti/warp/artifacts/observable_sim2real/autonomous_v24_dagger/round1_corpus.npz",
+      "sha256": "f2789df5434530221fbaa2e325334d3ffe67f035a51c03c1dd187baa1d1e6333"
+    }
+  },
+  "pixel_contract": "float32 NHWC in [0, 255]",
+  "action_contract": {
+    "output_range": [
+      -1.0,
+      1.0
+    ],
+    "teacher_physical_low": null,
+    "teacher_physical_high": null
+  },
+  "geometry_contract": "normalized by 0.75 m: cube-to-TCP xyz, cube-to-goal xyz",
+  "autonomous_controller": {
+    "enabled": true,
+    "contract_version": 2,
+    "mode_names": [
+      "hover_red",
+      "descend_grasp",
+      "close_gripper",
+      "lift",
+      "hover_green",
+      "descend_place",
+      "release",
+      "placed"
+    ],
+    "mode_feedback": "previous-step nonterminal probabilities in state[40:47]"
+  },
+  "geometry_residual": {
+    "enabled": true,
+    "approach_only": false,
+    "hover_only": true
+  },
+  "descend_geometry_residual": {
+    "enabled": false,
+    "phase": "descend_grasp"
+  },
+  "descend_visual_geometry_adapter": {
+    "enabled": false,
+    "phase": "descend_grasp",
+    "channels": 8,
+    "output": "cube_to_tcp_xyz"
+  },
+  "placement_geometry_residual": {
+    "enabled": false,
+    "phases": [
+      "DescendPlace",
+      "Release"
+    ],
+    "output": "cube_to_goal xyz only",
+    "z_only": false
+  }
+}

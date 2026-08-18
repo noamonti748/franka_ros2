@@ -1,0 +1,466 @@
+{
+  "controller_hz": 60,
+  "estimator_and_gates": {
+    "action_latency_steps_max": 3,
+    "action_latency_steps_min": 0,
+    "ctrl_dt": 0.016666666666666666,
+    "estimator_mode": "policy",
+    "gate_anneal_end_step": 1000000,
+    "gate_anneal_start_step": 0,
+    "gate_mode": "observable",
+    "geometry_scale_m": 0.75,
+    "observable_descend_recovery_steps": 300,
+    "observable_grasp_dwell_steps": 5,
+    "observable_grasp_width_tolerance": 0.005,
+    "observable_latch_timeout_steps": 900,
+    "observable_object_width": 0.05,
+    "observable_phase_extra_dwell": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "observable_placement_max_speed": 0.02,
+    "observable_position_gate_margin": 0.0,
+    "observable_position_gate_margins": [
+      0.0,
+      0.01,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "observable_settle_window_steps": 12,
+    "perception_bias_jitter": [
+      0.015,
+      0.015,
+      0.008
+    ],
+    "perception_interval_steps_max": 8,
+    "perception_interval_steps_min": 4,
+    "perception_latency_steps_max": 4,
+    "perception_latency_steps_min": 0,
+    "perception_noise_jitter": 0.003,
+    "perception_yaw_noise_degrees": 3.0,
+    "phase_completion_bonus": 100.0,
+    "phase_max_joint_velocity": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.4,
+      0.3,
+      0.5,
+      0.4
+    ],
+    "phase_settled_dwell": [
+      6,
+      4,
+      0,
+      0,
+      10,
+      8,
+      0,
+      0
+    ],
+    "phase_step_limits": [
+      800,
+      800,
+      120,
+      350,
+      800,
+      900,
+      90,
+      120
+    ],
+    "phase_step_penalties": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -0.05,
+      -0.05,
+      0.0,
+      0.0
+    ],
+    "phase_success_thresholds": [
+      0.05,
+      0.015,
+      0.05,
+      0.01,
+      0.05,
+      0.02,
+      0.05,
+      0.1
+    ],
+    "placement_descent_progress_reward_scale": 2000.0,
+    "placement_footprint_margin_reward_scale": 3000.0,
+    "placement_footprint_violation_penalty_scale": 60.0,
+    "placement_goal_x_offset": 0.004,
+    "placement_height_tolerance": 0.02,
+    "placement_max_angular_speed": 0.2,
+    "placement_max_linear_speed": 0.01,
+    "placement_tolerance": 0.02,
+    "response_time": 0.5,
+    "response_time_max": 0.55,
+    "response_time_min": 0.45,
+    "seated_offset_calibration_jitter": 0.002,
+    "seated_offset_max": 0.0311,
+    "seated_offset_min": 0.0176,
+    "success_dwell_steps": 10
+  },
+  "hardware": "Franka Emika Panda",
+  "runtime_controller": {
+    "config": "student_v6_final_controller.json",
+    "approach_mode": "DLS after 30 policy steps in HoverRed/DescendGrasp",
+    "downstream_mode": "ONNX action output",
+    "note": "The promoted behavior requires this runtime phase controller; ONNX alone reproduces only the student outputs."
+  },
+  "inputs": {
+    "pixels": {
+      "dtype": "float32",
+      "range": [
+        0.0,
+        255.0
+      ],
+      "shape": [
+        "batch",
+        64,
+        64,
+        3
+      ],
+      "source": "RGB camera"
+    },
+    "state": {
+      "dtype": "float32",
+      "layout": [
+        {
+          "name": "joint1..joint7",
+          "per_joint": [
+            "q/pi",
+            "dq/2",
+            "previous_q/pi",
+            "previous_dq/2"
+          ],
+          "range": [
+            0,
+            28
+          ]
+        },
+        {
+          "name": "previous_command/pi",
+          "range": [
+            28,
+            35
+          ]
+        },
+        {
+          "name": "tcp_fk_m/0.75",
+          "range": [
+            35,
+            38
+          ]
+        },
+        {
+          "name": "active_target_stage",
+          "range": [
+            38,
+            39
+          ]
+        },
+        {
+          "name": "gripper_openness",
+          "range": [
+            39,
+            40
+          ]
+        },
+        {
+          "name": "phase_flags",
+          "order": [
+            "hover_red_phase",
+            "descend_grasp_phase",
+            "close_gripper_phase",
+            "lift_phase",
+            "transport_adapter_phase",
+            "descend_place_phase",
+            "release_phase"
+          ],
+          "range": [
+            40,
+            47
+          ]
+        }
+      ],
+      "shape": [
+        "batch",
+        47
+      ]
+    }
+  },
+  "onnx": {
+    "path": "/home/noamonti/warp/artifacts/observable_sim2real/student_v6_final.onnx",
+    "sha256": "526824bcf868dff9738c09a62cd190a7b950db649d228e21a30ff55c2bcdb95f"
+  },
+  "oracle_policy": {
+    "actor": "forbidden",
+    "critic_and_diagnostics_only": [
+      "cube free-joint pose",
+      "paper pose",
+      "contacts",
+      "forces"
+    ]
+  },
+  "outputs": {
+    "action": {
+      "range": [
+        -1.0,
+        1.0
+      ],
+      "semantics": "normalized integrated Panda joint-position target",
+      "shape": [
+        "batch",
+        7
+      ]
+    },
+    "geometry": {
+      "feedback": "written to next env step before phase gating",
+      "order": [
+        "cube_to_tcp_x",
+        "cube_to_tcp_y",
+        "cube_to_tcp_z",
+        "cube_to_goal_x",
+        "cube_to_goal_y",
+        "cube_to_goal_z"
+      ],
+      "scale_m": 0.75,
+      "shape": [
+        "batch",
+        6
+      ]
+    }
+  },
+  "schema": "warp.observable-pick-place-unreal-contract",
+  "student_checkpoint": {
+    "metadata": {
+      "action_size": 7,
+      "conv_channels": [
+        16,
+        32,
+        64
+      ],
+      "geometry_size": 6,
+      "hidden_sizes": [
+        256,
+        256
+      ],
+      "parameters": {
+        "params/action_head/bias": {
+          "dtype": "<f4",
+          "sha256": "0224e044c7ede2be6de1869672c7dd3d7bfc725c5ed2a336d90ab8a5265f2b91",
+          "shape": [
+            7
+          ]
+        },
+        "params/action_head/kernel": {
+          "dtype": "<f4",
+          "sha256": "d69a20e211937c8df48eaab25f90f1f6b4be207ce8327296ead3adb93311d957",
+          "shape": [
+            256,
+            7
+          ]
+        },
+        "params/encoder_conv_0/bias": {
+          "dtype": "<f4",
+          "sha256": "a660f4f7217035cc88f049af5eacbdf8832bc08c46970ee49833f1dd7b635cbf",
+          "shape": [
+            16
+          ]
+        },
+        "params/encoder_conv_0/kernel": {
+          "dtype": "<f4",
+          "sha256": "5a11bddf4a4094185b51875e4bb4adc8a243a57cdc833418e12a8df6403a7883",
+          "shape": [
+            5,
+            5,
+            5,
+            16
+          ]
+        },
+        "params/encoder_conv_1/bias": {
+          "dtype": "<f4",
+          "sha256": "187810217d41e4ac065e4bd4e346a824d1b50c9dee0ed0eb8b0841361dd09fab",
+          "shape": [
+            32
+          ]
+        },
+        "params/encoder_conv_1/kernel": {
+          "dtype": "<f4",
+          "sha256": "f8b22e424f4f8212151761ca99ebb64384c4374d1d7b707a75acf8b2c1693ed8",
+          "shape": [
+            3,
+            3,
+            16,
+            32
+          ]
+        },
+        "params/encoder_conv_2/bias": {
+          "dtype": "<f4",
+          "sha256": "7d22a9d7beb983c99eb92e9a7c9b99d954a3af22ffa063bace2a505b70621c14",
+          "shape": [
+            64
+          ]
+        },
+        "params/encoder_conv_2/kernel": {
+          "dtype": "<f4",
+          "sha256": "dbd3f7f34248b031847f8aaa346d10c9b1264686062dcb6db942211ee14b01f4",
+          "shape": [
+            3,
+            3,
+            32,
+            64
+          ]
+        },
+        "params/geometry_head/bias": {
+          "dtype": "<f4",
+          "sha256": "ff1233ce857835caf623d2419c3319dc4653344ca0a9fdf8303c2cd6fa13fafc",
+          "shape": [
+            6
+          ]
+        },
+        "params/geometry_head/kernel": {
+          "dtype": "<f4",
+          "sha256": "5ae78c4507c8281435f283326020217eb4e51df9f319607e772ff828151dce40",
+          "shape": [
+            256,
+            6
+          ]
+        },
+        "params/log_std": {
+          "dtype": "<f4",
+          "sha256": "b7f3d4cdf1f8f816317a4d12420e9d4245ff9e3219ed0906d57b6284eda240ad",
+          "shape": [
+            7
+          ]
+        },
+        "params/state_dense/bias": {
+          "dtype": "<f4",
+          "sha256": "39955aed660a43a287a06f884a4369fc157051161d9815a286523fda64b70ea9",
+          "shape": [
+            64
+          ]
+        },
+        "params/state_dense/kernel": {
+          "dtype": "<f4",
+          "sha256": "a504d1bf3987c087b786cc1d4c48ee3d86346b5dd7f6224cbbd43400a61db13f",
+          "shape": [
+            47,
+            64
+          ]
+        },
+        "params/trunk_dense_0/bias": {
+          "dtype": "<f4",
+          "sha256": "795262f960da17396d00165c5b90605891b402efeacab1ae05c01ef547153c32",
+          "shape": [
+            256
+          ]
+        },
+        "params/trunk_dense_0/kernel": {
+          "dtype": "<f4",
+          "sha256": "b150eb4750ceb50a5c47c02a22e1c8fb860605140728da61913371ef0274f791",
+          "shape": [
+            128,
+            256
+          ]
+        },
+        "params/trunk_dense_1/bias": {
+          "dtype": "<f4",
+          "sha256": "b6808866464872948cd661be0804335023f10c64f585d6ad2284afdcae55bf3c",
+          "shape": [
+            256
+          ]
+        },
+        "params/trunk_dense_1/kernel": {
+          "dtype": "<f4",
+          "sha256": "9ed1cd87a5aa07c856057c5387051b9e639ee61655f32248b2b9d139b4f08df3",
+          "shape": [
+            256,
+            256
+          ]
+        }
+      },
+      "pixel_range": [
+        0.0,
+        255.0
+      ],
+      "pixel_shape": [
+        64,
+        64,
+        3
+      ],
+      "schema": "warp.vision-student-parameters",
+      "state_features": 64,
+      "state_size": 47,
+      "training": {
+        "batch_size": 128,
+        "corpora": [
+          "/mnt/c/Robotics/UnrealRoboticsLab/training/observable_sim2real_teacher/iter161_teacher_corpus_labels.npz",
+          "/mnt/c/Robotics/UnrealRoboticsLab/training/observable_sim2real_teacher/iter161_teacher_corpus_labels.npz",
+          "/mnt/c/Robotics/UnrealRoboticsLab/training/observable_sim2real_teacher/mujoco_fixed_dr_corpus.npz",
+          "/mnt/c/Robotics/UnrealRoboticsLab/training/observable_sim2real_teacher/dagger_v6/dagger_round1_corpus.npz",
+          "/mnt/c/Robotics/UnrealRoboticsLab/training/observable_sim2real_teacher/dagger_v6/dagger_round2_corpus.npz"
+        ],
+        "corpus_schema": "warp.vision-student-corpus",
+        "corpus_sha256": [
+          "a50570eb26ab9d1ecc61e54d70db0d8d73ce905408aff3a26cbc6d69fe5db879",
+          "a50570eb26ab9d1ecc61e54d70db0d8d73ce905408aff3a26cbc6d69fe5db879",
+          "9da8b5e2891853328ad57eca3e606f6a6e700b311b7a33446e79c098b8f8d9b3",
+          "f0eb5b531540c9ed21ba18031222e33385b2d072ac1c8870db0fe51c8aacfe5e",
+          "a047918c2720ece1849300115f832ccddb385cc749f10b707d5c0a1a6589fc46"
+        ],
+        "corpus_version": 1,
+        "epochs": 30,
+        "final_train_loss": 3.297916947080332e-05,
+        "geometry_head_only": false,
+        "geometry_loss_weight": 1.0,
+        "initialize_from": "/home/noamonti/warp/artifacts/observable_sim2real/dagger_v6/round1_student.npz",
+        "learning_rate": 0.0002,
+        "seed": 2028,
+        "teacher_action_high": [
+          2.8973000049591064,
+          1.7627999782562256,
+          2.8973000049591064,
+          -0.0697999969124794,
+          2.8973000049591064,
+          3.752500057220459,
+          2.8973000049591064
+        ],
+        "teacher_action_low": [
+          -2.8973000049591064,
+          -1.7627999782562256,
+          -2.8973000049591064,
+          -3.0717999935150146,
+          -2.8973000049591064,
+          -0.017500000074505806,
+          -2.8973000049591064
+        ],
+        "training_samples": 132250,
+        "validation_behavior_loss": 3.0093408056088388e-05,
+        "validation_geometry_loss": 4.7735880881119976e-06,
+        "validation_loss": 3.4866996144200386e-05,
+        "validation_samples": 14694,
+        "weight_decay": 1e-06
+      },
+      "version": 1
+    },
+    "path": "/home/noamonti/warp/artifacts/observable_sim2real/student_v6.npz",
+    "sha256": "97f14fd628ce7020c2379773f16d72ca4558d90ef6984c3c311fb3babb3c0896"
+  },
+  "version": 1
+}

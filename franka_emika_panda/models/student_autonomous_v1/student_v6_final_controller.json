@@ -1,0 +1,84 @@
+{
+  "schema": "warp.autonomous-student-controller-runtime",
+  "version": 2,
+  "onnx": "student_v6_final.onnx",
+  "onnx_sha256": "c3cedea560bb263bba912f7ddbcbd8781b8ca844c1b18e3c3cd87f630f47e39d",
+  "pixel_range": [
+    0.0,
+    255.0
+  ],
+  "approach": {
+    "mode": "damped_least_squares",
+    "policy_warmup_steps_per_phase": 30,
+    "damping": 0.05,
+    "cartesian_gain": 1.4,
+    "hover_max_speed_m_s": 0.18,
+    "descend_max_speed_m_s": 0.06,
+    "joint_velocity_limit_fraction": 0.72,
+    "hover_offset_m": 0.075,
+    "grasp_tcp_offset_m": 0.01,
+    "controller": "onnx",
+    "dls_enabled": false,
+    "external_geometric_gates": false
+  },
+  "observable_gate_margins_m": [
+    0.0,
+    0.01,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "downstream": {
+    "mode": "onnx_policy",
+    "phases": [
+      "CloseGripper",
+      "Lift",
+      "HoverGreen",
+      "DescendPlace",
+      "Release",
+      "Retreat"
+    ]
+  },
+  "nominal_evaluation": {
+    "placements": 13,
+    "episodes": 16,
+    "placement_rate": 0.8125,
+    "lift_entries": 14,
+    "lift_completions": 14
+  },
+  "light_domain_randomization": {
+    "scale": 0.2,
+    "placements": 12,
+    "episodes": 16,
+    "placement_rate": 0.75,
+    "lift_entries": 13,
+    "lift_completions": 13,
+    "effective_ranges": {
+      "camera_position_m": 0.0016,
+      "camera_rotation_degrees": 0.3,
+      "camera_fovy_degrees": 0.3,
+      "light_intensity_fraction": 0.06,
+      "light_color_fraction": 0.02,
+      "light_direction_degrees": 1.0
+    }
+  },
+  "notes": [
+    "The DLS controller consumes ONNX cube-to-TCP geometry and joint encoders.",
+    "The 10 mm phase-1 margin affects only estimator gating; the physical grasp latch remains unchanged.",
+    "No workcell clamp or world anchor is promoted because those reduced full-set success or overfit edge cases."
+  ],
+  "validation": {
+    "onnxruntime_checked": true,
+    "opset": 17,
+    "flax_to_torch_max_abs": 2.384185791015625e-07,
+    "torch_to_onnx_max_abs": 2.384185791015625e-07,
+    "unreal_corpus_samples": 3072,
+    "unreal_action_rmse": 0.0028281614650040865,
+    "unreal_geometry_rmse": 0.0015086304629221559,
+    "unreal_parity_passed": true
+  },
+  "autonomous_controller": true
+}

@@ -20,6 +20,13 @@
   <xacro:arg name="gazebo_effort" default="false"/>
   <xacro:arg name="is_async" default="false"/>
   <xacro:arg name="thread_priority" default="50"/>
+  <xacro:arg name="initial_joint1" default="0.0"/>
+  <xacro:arg name="initial_joint2" default="0.0"/>
+  <xacro:arg name="initial_joint3" default="0.0"/>
+  <xacro:arg name="initial_joint4" default="${-pi/2}"/>
+  <xacro:arg name="initial_joint5" default="0.0"/>
+  <xacro:arg name="initial_joint6" default="${pi/2}"/>
+  <xacro:arg name="initial_joint7" default="${-pi/4}"/>
 
   <xacro:property name="arm_id" value="$(arg arm_id)"/>
   <xacro:property name="mesh_pkg" value="package://franka_emika_panda/assets"/>
@@ -292,13 +299,13 @@
         arm_prefix=""
         is_async="$(arg is_async)"
         thread_priority="$(arg thread_priority)"
-        initial_joint1="0.0"
-        initial_joint2="0.0"
-        initial_joint3="0.0"
-        initial_joint4="${-pi/2}"
-        initial_joint5="0.0"
-        initial_joint6="${pi/2}"
-        initial_joint7="${-pi/4}"/>
+        initial_joint1="$(arg initial_joint1)"
+        initial_joint2="$(arg initial_joint2)"
+        initial_joint3="$(arg initial_joint3)"
+        initial_joint4="$(arg initial_joint4)"
+        initial_joint5="$(arg initial_joint5)"
+        initial_joint6="$(arg initial_joint6)"
+        initial_joint7="$(arg initial_joint7)"/>
   </xacro:if>
 
 </robot>

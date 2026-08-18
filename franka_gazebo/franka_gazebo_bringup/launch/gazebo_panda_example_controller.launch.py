@@ -55,8 +55,27 @@ def load_controller(context: LaunchContext, controller_name):
     )]
 
 
-def get_robot_description(context: LaunchContext, load_gripper):
+def get_robot_description(
+    context: LaunchContext,
+    load_gripper,
+    initial_joint1,
+    initial_joint2,
+    initial_joint3,
+    initial_joint4,
+    initial_joint5,
+    initial_joint6,
+    initial_joint7,
+):
     load_gripper_str = context.perform_substitution(load_gripper)
+    initial_joint_values = {
+        'initial_joint1': context.perform_substitution(initial_joint1),
+        'initial_joint2': context.perform_substitution(initial_joint2),
+        'initial_joint3': context.perform_substitution(initial_joint3),
+        'initial_joint4': context.perform_substitution(initial_joint4),
+        'initial_joint5': context.perform_substitution(initial_joint5),
+        'initial_joint6': context.perform_substitution(initial_joint6),
+        'initial_joint7': context.perform_substitution(initial_joint7),
+    }
 
     panda_xacro_file = os.path.join(
         get_package_share_directory('franka_emika_panda'),
@@ -71,6 +90,7 @@ def get_robot_description(context: LaunchContext, load_gripper):
             'gazebo': 'true',
             'include_ros2_control': 'true',
             'gazebo_effort': 'true',
+            **initial_joint_values,
         }
     )
 
@@ -97,12 +117,22 @@ def generate_launch_description():
     controller_name = 'controller'
     rviz_name = 'rviz'
     gz_args_name = 'gz_args'
+    initial_joint_names = [
+        'initial_joint1',
+        'initial_joint2',
+        'initial_joint3',
+        'initial_joint4',
+        'initial_joint5',
+        'initial_joint6',
+        'initial_joint7',
+    ]
 
     load_gripper = LaunchConfiguration(load_gripper_name)
     namespace = LaunchConfiguration(namespace_name)
     controller = LaunchConfiguration(controller_name)
     rviz = LaunchConfiguration(rviz_name)
     gz_args = LaunchConfiguration(gz_args_name)
+    initial_joints = [LaunchConfiguration(name) for name in initial_joint_names]
 
     load_gripper_launch_argument = DeclareLaunchArgument(
         load_gripper_name,
@@ -124,10 +154,40 @@ def generate_launch_description():
         rviz_name,
         default_value='true',
         description='true/false for visualizing the robot in rviz')
+    initial_joint_launch_arguments = [
+        DeclareLaunchArgument(
+            'initial_joint1',
+            default_value='0.0',
+            description='Initial Gazebo Panda joint1 position in radians.'),
+        DeclareLaunchArgument(
+            'initial_joint2',
+            default_value='0.0',
+            description='Initial Gazebo Panda joint2 position in radians.'),
+        DeclareLaunchArgument(
+            'initial_joint3',
+            default_value='0.0',
+            description='Initial Gazebo Panda joint3 position in radians.'),
+        DeclareLaunchArgument(
+            'initial_joint4',
+            default_value='-1.5707963267948966',
+            description='Initial Gazebo Panda joint4 position in radians.'),
+        DeclareLaunchArgument(
+            'initial_joint5',
+            default_value='0.0',
+            description='Initial Gazebo Panda joint5 position in radians.'),
+        DeclareLaunchArgument(
+            'initial_joint6',
+            default_value='1.5707963267948966',
+            description='Initial Gazebo Panda joint6 position in radians.'),
+        DeclareLaunchArgument(
+            'initial_joint7',
+            default_value='-0.7853981633974483',
+            description='Initial Gazebo Panda joint7 position in radians.'),
+    ]
 
     robot_state_publisher = OpaqueFunction(
         function=get_robot_description,
-        args=[load_gripper])
+        args=[load_gripper, *initial_joints])
 
     os.environ['GZ_SIM_RESOURCE_PATH'] = os.pathsep.join([
         os.path.dirname(get_package_share_directory('franka_emika_panda')),
@@ -186,6 +246,7 @@ def generate_launch_description():
         controller_launch_argument,
         gz_args_launch_argument,
         rviz_launch_argument,
+        *initial_joint_launch_arguments,
         gazebo_empty_world,
         robot_state_publisher,
         rviz_node,

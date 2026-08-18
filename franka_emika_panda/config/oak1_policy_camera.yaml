@@ -1,0 +1,23 @@
+# Expected physical-camera contract. Hardware identity/calibration must still
+# be read from the connected device before policy commands are enabled.
+oak1_policy_camera:
+  ros__parameters:
+    expected_product: "OAK-1"
+    expected_sensor: "IMX378"
+    expected_focus: "fixed"
+    rolling_shutter: true
+    sensor_fps: 60.0
+    expected_vertical_fov_deg: 55.0
+    policy_width: 64
+    policy_height: 64
+    policy_encoding: "rgb8"
+    crop: "center_square_from_4_by_3"
+    undistort: true
+    publish_device_capture_timestamp: true
+    subscription_qos: "best_effort"
+    subscription_depth: 1
+    stale_timeout_s: 0.10
+    qualified_delay_p95_s: 0.075
+    required_delay_p95_s: 0.05
+    require_intrinsics_calibration: true
+    require_base_extrinsics_calibration: true

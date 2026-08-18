@@ -1,0 +1,64 @@
+{
+  "checkpoint": "/home/noamonti/warp/artifacts/observable_sim2real/student_v6.npz",
+  "checkpoint_sha256": "97f14fd628ce7020c2379773f16d72ca4558d90ef6984c3c311fb3babb3c0896",
+  "onnx": "/home/noamonti/warp/artifacts/observable_sim2real/student_v6_final.onnx",
+  "onnx_sha256": "526824bcf868dff9738c09a62cd190a7b950db649d228e21a30ff55c2bcdb95f",
+  "opset": 17,
+  "inputs": {
+    "pixels": [
+      "batch",
+      64,
+      64,
+      3
+    ],
+    "state": [
+      "batch",
+      47
+    ]
+  },
+  "outputs": {
+    "action": [
+      "batch",
+      7
+    ],
+    "geometry": [
+      "batch",
+      6
+    ]
+  },
+  "parity": {
+    "tolerance": 2e-05,
+    "flax_torch_action_max_abs": 1.7881393432617188e-07,
+    "flax_torch_geometry_max_abs": 2.384185791015625e-07,
+    "torch_onnx_action_max_abs": 1.7881393432617188e-07,
+    "torch_onnx_geometry_max_abs": 2.384185791015625e-07,
+    "onnxruntime_checked": true,
+    "corpus": null
+  },
+  "pixel_contract": "float32 NHWC in [0, 255]",
+  "action_contract": {
+    "output_range": [
+      -1.0,
+      1.0
+    ],
+    "teacher_physical_low": [
+      -2.8973000049591064,
+      -1.7627999782562256,
+      -2.8973000049591064,
+      -3.0717999935150146,
+      -2.8973000049591064,
+      -0.017500000074505806,
+      -2.8973000049591064
+    ],
+    "teacher_physical_high": [
+      2.8973000049591064,
+      1.7627999782562256,
+      2.8973000049591064,
+      -0.0697999969124794,
+      2.8973000049591064,
+      3.752500057220459,
+      2.8973000049591064
+    ]
+  },
+  "geometry_contract": "normalized by 0.75 m: cube-to-TCP xyz, cube-to-goal xyz"
+}

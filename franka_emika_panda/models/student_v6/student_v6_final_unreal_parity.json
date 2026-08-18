@@ -1,0 +1,11 @@
+{
+  "action_max_abs": 0.02607882022857666,
+  "action_rmse": 0.0028281614650040865,
+  "checkpoint": "/home/noamonti/warp/artifacts/observable_sim2real/student_v6.npz",
+  "corpus": "/mnt/c/Robotics/UnrealRoboticsLab/training/observable_sim2real_teacher/iter161_teacher_corpus_labels.npz",
+  "geometry_max_abs": 0.012261360883712769,
+  "geometry_rmse": 0.0015086304629221559,
+  "passed": true,
+  "samples": 3072,
+  "schema": "warp.student-parity-v1"
+}

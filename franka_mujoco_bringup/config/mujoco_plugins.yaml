@@ -1,0 +1,34 @@
+/**:
+  ros__parameters:
+    mujoco_plugins:
+      mujoco_camera_plugin:
+        type: mujoco_ros2_control_plugins/CameraPlugin
+        camera_publish_rate: 60.0
+        policy_camera:
+          policy: streaming
+          frame_name: policy_camera_optical_frame
+          info_topic: /policy_camera/sim/camera_info
+          image_topic: /policy_camera/sim/color/image_raw
+          depth_topic: /policy_camera/sim/depth/image_raw
+        scene_camera:
+          policy: polled
+          frame_name: scene_camera_optical_frame
+          info_topic: /scene_camera/camera_info
+          image_topic: /scene_camera/color/image_raw
+          depth_topic: /scene_camera/depth/image_raw
+          trigger_service_name: /scene_camera/trigger
+      free_joint_state_publisher:
+        type: mujoco_ros2_control_plugins/FreeJointStatePublisherPlugin
+        frame_id: ""
+        body_names: ["box"]
+        topic: "/box/free_joint_state"
+        publish_rate: 50.0
+
+# Sub-nodes do not namespace parameters, so the plugin reads these unprefixed
+# names from /mujoco_ros2_control_node rather than the mujoco_plugins.* keys.
+/mujoco_ros2_control_node:
+  ros__parameters:
+    frame_id: ""
+    body_names: ["box"]
+    topic: "/box/free_joint_state"
+    publish_rate: 50.0

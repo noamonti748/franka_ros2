@@ -1,0 +1,20 @@
+# Autonomous v24-distilled controller overlay (save point 2026-08-18).
+#
+# Load after student_v6_real.yaml. It changes policy ownership only; all
+# hardware readiness, freshness, command-limit, and E-stop protections remain
+# inherited from the real-hardware profile. Commanding stays disabled by
+# default in the base profile.
+#
+# Hybrid save point: learned advance drives phase transitions while DLS remains
+# enabled for the approach servo. The thin no-DLS candidate performed worse.
+panda_student_v6_real:
+  ros__parameters:
+    autonomous_controller: true
+    dls_enabled: true
+    advance_threshold: 0.55
+    mode_min_dwell_steps: 20
+    approach_lock_wrist_home: false
+    dls_anchor_estimate: false
+    mode_filter_alpha: 0.35
+    mode_filter_margin: 0.15
+    mode_filter_consecutive_steps: 3

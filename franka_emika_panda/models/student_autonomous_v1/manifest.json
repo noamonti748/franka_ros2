@@ -1,0 +1,13 @@
+{
+  "schema": "warp.autonomous-ros-bundle",
+  "version": 1,
+  "model": "student_autonomous_v1.onnx",
+  "onnx_sha256": "c3cedea560bb263bba912f7ddbcbd8781b8ca844c1b18e3c3cd87f630f47e39d",
+  "rollback": "student_v24_urlab_candidate.onnx",
+  "status": {
+    "promoted": false,
+    "hardware_qualified": false,
+    "nominal_placements": "0/16",
+    "reason": "closed-loop nominal promotion gate failed"
+  }
+}

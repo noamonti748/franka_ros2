@@ -1,0 +1,45 @@
+The main gaps I’d close before calling it sim2real-ready:
+
+  1. fr3_onnx_policy.launch.py is still for the older ppo_track_franka.onnx / panda_track_reach_ros2 stack, not the newer RF3/reduce-shake/eval stack we just built. If you want RF3 on FR3, we should add a real-hardware
+     fr3_rf3_onnx_policy.launch.py or fr3_rf3_eval_onnx_policy.launch.py.
+
+  2. policy_enabled defaults to true. For real hardware, I would default that to false or make a separate “armed” launch. First bringup should start hardware + controller + RViz + target marker with zero policy commands.
+  3. The FR3 real launch still uses trajectory_duration_s:=0.05 at control_hz:=60. That is the same streamed-JTC timing pattern we already identified as problematic in sim. I would change/tune it to about 0.015 before policy execution, unless this
+     specific legacy policy needs the old behavior.
+
+  4. The launch is root-namespace oriented. Fine for one arm, but not robust if you later use namespaces or dual-arm/mobile setups. The policy topic and controller manager paths would need explicit namespace handling.
+  5. It assumes load_gripper:=true so fr3_hand_tcp exists. If you run without the hand/gripper frame, TF will fail unless we switch TCP frame or add a fixed TCP frame.
+  6. It does not encode a safe initial pose / home-return gate before enabling policy commands. For real robot, I’d want an explicit “move/check home” phase or at least a preflight check that joint positions are inside the policy’s expected
+     envelope.
+
+  The bringup check I’d run first:
+
+  source install/setup.bash
+
+  ros2 launch franka_bringup fr3_onnx_policy.launch.py \
+      robot_ip:=<FR3_IP> \
+      load_gripper:=true \
+      policy_enabled:=false \
+      rviz:=true
+
+  Then in another terminal:
+
+  source install/setup.bash
+
+  ros2 control list_controllers
+  ros2 topic info -v /joint_states
+  ros2 topic info -v /fr3_joint_trajectory_controller/joint_trajectory
+  ros2 run tf2_ros tf2_echo fr3_link0 fr3_hand_tcp
+  ros2 topic echo /reach_track/info --once
+
+  Expected before enabling policy:
+
+  - joint_state_broadcaster active
+  - fr3_joint_trajectory_controller active
+  - /joint_states publishing
+  - TF available: fr3_link0 -> fr3_hand_tcp
+  - RViz shows robot + target marker
+  - trajectory topic has controller subscriber, but no policy publisher if policy disabled
+
+  My recommendation: don’t run the current FR3 policy launch “live” yet. It’s close, but I’d first make a small real-hardware FR3 RF3 launch with conservative defaults and a safe policy_enabled:=false first stage. Then test fake hardware, then
+  real hardware with policy disabled, then policy enabled at reduced command authority.

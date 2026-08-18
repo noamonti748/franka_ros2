@@ -1,0 +1,162 @@
+# REAL PANDA HARDWARE CONFIGURATION -- DO NOT USE WITHOUT A WORKCELL REVIEW.
+#
+# This file configures only the student-v6 supervisor. It does not start
+# franka_bringup, activate a controller, alter Franka collision/reflex limits,
+# home the gripper, or recover robot errors. Those operations remain explicit
+# operator responsibilities in the already-running ROS 2 Humble stack.
+#
+# Safe startup is intentional:
+#   * policy_enabled is false, so no arm or gripper command may be published.
+#   * startup_home_enabled is true, but it is a measured pre-position check;
+#     this node never commands the arm to home.
+#   * CloseGripper may advance only from a successful franka_msgs/action/Grasp
+#     result. Finger width alone is not accepted as hardware grasp success.
+#
+# The goal, seated-object offset, and camera extrinsics below contain training
+# references. Measure them in the real workcell before enabling commands.
+
+panda_student_v6_real:
+  ros__parameters:
+    use_sim_time: false
+
+    # Master command interlock. The launch file also requires an exact,
+    # conspicuous enable_confirmation string before this may be true.
+    policy_enabled: false
+    hold_on_fault: false
+    block_command_publication_until_ready: true
+    stop_command_publication_on_stale_input: true
+
+    # The launch file supplies the absolute installed share path. The runtime
+    # verifies the promoted model SHA before inference.
+    onnx_model_path: ""
+
+    robot_id: "panda"
+
+    base_frame: "panda_link0"
+    tcp_frame: "panda_hand_tcp"
+    camera_frame: "policy_camera_optical_frame"
+    require_camera_tf: true
+    use_pykdl: true
+    robot_description: ""
+    robot_description_topic: "/robot_description"
+
+    # Endpoints from an already-running franka_bringup + explicitly loaded JTC.
+    joint_states_topic: "/joint_states"
+    image_topic: "/policy_camera/image_raw"
+    camera_info_topic: "/policy_camera/camera_info"
+    image_subscription_depth: 1
+    image_qos_reliability: "best_effort"
+    camera_preprocess_mode: "oak_4_by_3"
+    policy_vertical_fov_deg: 55.0
+    camera_aspect_tolerance: 0.02
+    image_width: 64
+    image_height: 64
+    image_encoding: "rgb8"
+    reject_resized_or_wrong_encoding_image: true
+    command_topic: "/panda_joint_trajectory_controller/joint_trajectory"
+    gripper_state_topic: "/franka_gripper/joint_states"
+    grasp_action_name: "/franka_gripper/grasp"
+    move_action_name: "/franka_gripper/move"
+    telemetry_topic: "/panda_student_v6/telemetry"
+
+    # The runtime hard-validates RGB8 64x64 NHWC [0,255]. All sources must be
+    # valid before the first policy command and remain valid while enabled.
+    require_joint_states: true
+    require_image: true
+    require_tcp_tf: true
+    require_gripper_state: true
+    require_grasp_action_server: true
+    stale_timeout_s: 0.25
+    joint_state_stale_timeout_s: 0.10
+    image_stale_timeout_s: 0.10
+    tcp_tf_stale_timeout_s: 0.10
+    gripper_state_stale_timeout_s: 0.20
+    readiness_consecutive_ticks: 12
+
+    control_hz: 60.0
+    action_latency_steps: 0
+    response_time_s: 0.5
+    snapshot_poll_hz: 240.0
+    trajectory_duration_s: 0.015
+    bypass_command_limiter: false
+    dls_anchor_estimate: false
+    dls_anchor_alpha: 0.1
+    dls_anchor_clamp_radius_m: 0.025
+    dls_descend_target: live
+    approach_lock_wrist_home: true
+
+    # Trained pick/place home. This is a pre-position requirement, not a target:
+    # the operator/bringup stack must place the arm here before enabling policy.
+    startup_home_enabled: true
+    startup_home_requires_policy_enabled: true
+    startup_home_joints_rad:
+      - 0.0
+      - 0.3
+      - 0.0
+      - -1.5707963268
+      - 0.0
+      - 2.0
+      - -0.7853981634
+    startup_home_tolerance_rad: 0.03
+    startup_home_velocity_tolerance_rad_s: 0.10
+    startup_home_hold_ticks: 30
+
+    # These remain false in the shipped file. Use a reviewed deployment config
+    # with measured camera/workcell/seated-offset calibration before enabling.
+    require_workcell_calibration_confirmation: true
+    goal_pose_calibrated: false
+
+    # Training measured range was 17.6--31.1 mm (mean 22.9 mm). Replace the
+    # mean with a measured TCP-to-seated-object vertical offset.
+    seated_offset_m: 0.0229
+    seated_offset_calibrated: false
+    camera_extrinsics_calibrated: false
+
+    # Hardware backend uses franka_msgs/action/Grasp. A successful action result
+    # is the sole CloseGripper transition authority; width remains telemetry and
+    # a consistency check, never a success latch.
+    gripper_backend: "hardware"
+    dls_enabled: true
+    grasp_retry_recovery_enabled: true
+
+    # Software command bounds leave 0.05 rad from each Panda hard limit.
+    command_joint_lower_limits_rad:
+      - -2.8473
+      - -1.7128
+      - -2.8473
+      - -3.0218
+      - -2.8473
+      - 0.0325
+      - -2.8473
+    command_joint_upper_limits_rad:
+      - 2.8473
+      - 1.7128
+      - 2.8473
+      - -0.1198
+      - 2.8473
+      - 3.7025
+      - 2.8473
+
+    # Conservative first-commissioning cap: 0.23*rated (~0.50 rad/s J1-4,
+    # ~0.60 rad/s J5-7), below the trained 0.38*rated cap.
+    velocity_limit_fraction: 0.23
+    command_joint_velocity_limits_rad_s:
+      - 0.50
+      - 0.50
+      - 0.50
+      - 0.50
+      - 0.60
+      - 0.60
+      - 0.60
+    max_command_step_rad:
+      - 0.008333333333333333
+      - 0.008333333333333333
+      - 0.008333333333333333
+      - 0.008333333333333333
+      - 0.010
+      - 0.010
+      - 0.010
+
+    # Collision thresholds, impedance, reflexes, controller activation, and
+    # error recovery belong to the separately operated Franka stack. This node
+    # does not configure, weaken, activate, or recover any of them.
