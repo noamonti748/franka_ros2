@@ -460,8 +460,15 @@ class AutonomousSession:
         if float(np.sum(np.maximum(probabilities, 0.0))) <= 0.0:
             probabilities = np.zeros(8, dtype=np.float32)
             probabilities[int(self.phase)] = 1.0
+        # Advance-head path ignores mode probs; still forbid leaving
+        # CloseGripper/Lift without a width latch (otherwise ROS "grasps" are
+        # empty phase advances with the cube on the table).
+        effective_advance = advance_prob
+        if advance_prob is not None and not estimate.grasp_latched:
+            if self.phase in (Phase.CLOSE_GRIPPER, Phase.LIFT):
+                effective_advance = 0.0
         decision = self.mode_filter.update(
-            probabilities, advance_prob=advance_prob
+            probabilities, advance_prob=effective_advance
         )
         active_phase = decision.phase
         self.phase = decision.phase

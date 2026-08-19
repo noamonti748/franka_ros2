@@ -1502,14 +1502,18 @@ def create_node_class() -> type[Any]:
                 if self._autonomous_controller and mode_probs is None:
                     raise ValueError("autonomous ONNX model omitted mode_probs")
                 geometry_for_control = np.asarray(geometry, dtype=np.float64)
-                if not self._autonomous_controller:
+                # Stage C hybrid (autonomous_controller + dls_enabled) still
+                # needs the sim_box/hover cube anchor; skipping this under
+                # autonomous left DESCEND_GRASP permanently in
+                # sim_box_pose_unavailable.
+                if (not self._autonomous_controller) or self._dls_enabled:
                     self._update_cube_anchor(
                         phase=active_phase,
                         tcp_position_m=snapshot.tcp_position_m,
                         geometry=geometry_for_control,
                     )
                 approach_frozen = bool(
-                    not self._autonomous_controller
+                    ((not self._autonomous_controller) or self._dls_enabled)
                     and self._dls_descend_target in ("sim_box", "hover_estimate")
                     and self._dls_anchor_valid
                     and int(active_phase) == int(Phase.DESCEND_GRASP)
